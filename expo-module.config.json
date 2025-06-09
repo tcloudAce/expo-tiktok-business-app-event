@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["ExpoTiktokEventModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.tiktokevent.ExpoTiktokEventModule"]
+  }
+}
