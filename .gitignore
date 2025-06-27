@@ -8,7 +8,7 @@ jsconfig.json
 
 # Xcode
 #
-build/
+ios/build/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -28,6 +28,7 @@ project.xcworkspace
 
 # Android/IJ
 #
+android/build/
 .classpath
 .cxx
 .gradle
@@ -39,13 +40,6 @@ android.iml
 android/app/libs
 android/keystores/debug.keystore
 
-# Cocoapods
-#
-example/ios/Pods
-
-# Ruby
-example/vendor/
-
 # node.js
 #
 node_modules/
@@ -55,3 +49,5 @@ yarn-error.log
 
 # Expo
 .expo/*
+
+example/
