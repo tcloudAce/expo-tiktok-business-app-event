@@ -1,36 +1,61 @@
-import { useEvent } from 'expo';
-import ExpoTiktokEvent, { ExpoTiktokEventView } from 'expo-tiktok-event';
-import { Button, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import ExpoTiktokEvent from "expo-tiktok-event";
+import {
+  Button,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function App() {
-  const onChangePayload = useEvent(ExpoTiktokEvent, 'onChange');
+  const tikTokAppid = Platform.select({
+    android: "7511853962595303431",
+    ios: "7512251190466347016",
+  });
+  const appid = Platform.select({
+    android: "kr.carlab.www",
+    ios: "1557822254",
+  });
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
         <Group name="Constants">
-          <Text>{ExpoTiktokEvent.PI}</Text>
+          <Text>{ExpoTiktokEvent.TIKTOK_INIT_STATUS.SUCCESS}</Text>
+          <Text>{ExpoTiktokEvent.TIKTOK_INIT_STATUS.FAIL}</Text>
         </Group>
-        <Group name="Functions">
-          <Text>{ExpoTiktokEvent.hello()}</Text>
-        </Group>
+
         <Group name="Async functions">
           <Button
             title="Set value"
             onPress={async () => {
-              await ExpoTiktokEvent.setValueAsync('Hello from JS!');
+              const { status, error } = await ExpoTiktokEvent.initTikTokSdk(
+                appid!,
+                tikTokAppid!
+              );
+              if (error) {
+                console.log(status, ":", error);
+              } else {
+                console.log(status);
+                ExpoTiktokEvent.startTrack();
+                ExpoTiktokEvent.identifyUser(
+                  "testId",
+                  "testName",
+                  "testPhone",
+                  "testEmail"
+                );
+              }
             }}
           />
-        </Group>
-        <Group name="Events">
-          <Text>{onChangePayload?.value}</Text>
-        </Group>
-        <Group name="Views">
-          <ExpoTiktokEventView
-            url="https://www.example.com"
-            onLoad={({ nativeEvent: { url } }) => console.log(`Loaded: ${url}`)}
-            style={styles.view}
+
+          <Button
+            title="events"
+            onPress={async () => {
+              ExpoTiktokEvent.trackRegisterEvent();
+              ExpoTiktokEvent.trackLoginEvent();
+            }}
           />
         </Group>
       </ScrollView>
@@ -58,13 +83,13 @@ const styles = {
   },
   group: {
     margin: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
   },
   container: {
     flex: 1,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   view: {
     flex: 1,

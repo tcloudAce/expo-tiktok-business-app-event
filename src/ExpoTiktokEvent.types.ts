@@ -1,19 +1,28 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+export type TikTokInitStatus = "success" | "fail";
 
-export type OnLoadEventPayload = {
-  url: string;
-};
+export interface TikTokInitStatusConstant {
+  SUCCESS: TikTokInitStatus;
+  FAIL: TikTokInitStatus;
+}
 
-export type ExpoTiktokEventModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
+export interface TikTokInitError {
+  code: string;
+  message?: string | null;
+}
 
-export type ChangeEventPayload = {
-  value: string;
-};
+export interface InitTikTokSdkResult {
+  status: TikTokInitStatus;
+  error: TikTokInitError | null;
+}
 
-export type ExpoTiktokEventViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
-};
+export interface ExpoTiktokEventModuleFunctions {
+  initTikTokSdk(appId: string, ttAppId: string): Promise<InitTikTokSdkResult>;
+  startTrack(): void;
+  identifyUser(
+    externalId?: string | null,
+    externalUserName?: string | null,
+    phoneNumber?: string | null,
+    email?: string | null
+  ): void;
+  logout(): void;
+}

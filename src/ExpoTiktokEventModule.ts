@@ -1,12 +1,33 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, requireNativeModule } from "expo";
 
-import { ExpoTiktokEventModuleEvents } from './ExpoTiktokEvent.types';
+import {
+  ExpoTiktokEventModuleFunctions,
+  InitTikTokSdkResult,
+  TikTokInitStatusConstant,
+} from "./ExpoTiktokEvent.types";
 
-declare class ExpoTiktokEventModule extends NativeModule<ExpoTiktokEventModuleEvents> {
-  PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
+declare class ExpoTiktokEventModule
+  extends NativeModule
+  implements ExpoTiktokEventModuleFunctions
+{
+  readonly TIKTOK_INIT_STATUS: TikTokInitStatusConstant;
+
+  initTikTokSdk(appId: string, ttAppId: string): Promise<InitTikTokSdkResult>;
+
+  startTrack(): void;
+
+  identifyUser(
+    externalId: string | null,
+    externalUserName: string | null,
+    phoneNumber: string | null,
+    email: string | null
+  ): void;
+
+  logout(): void;
+
+  trackLoginEvent(): void;
+
+  trackRegisterEvent(): void;
 }
 
-// This call loads the native module object from the JSI.
-export default requireNativeModule<ExpoTiktokEventModule>('ExpoTiktokEvent');
+export default requireNativeModule<ExpoTiktokEventModule>("ExpoTiktokEvent");

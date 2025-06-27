@@ -1,50 +1,114 @@
 package expo.modules.tiktokevent
 
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
+import expo.modules.kotlin.Promise
+import com.tiktok.TikTokBusinessSdk;
+import com.tiktok.TikTokBusinessSdk.TTConfig;
+import com.tiktok.appevents.base.EventName
+import com.tiktok.appevents.base.TTBaseEvent
 
 class ExpoTiktokEventModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+
+  private enum class TikTokInitStatus(val value: String) {
+    SUCCESS("success"),
+    FAIL("fail")
+  }
+
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoTiktokEvent')` in JavaScript.
+
     Name("ExpoTiktokEvent")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
     Constants(
-      "PI" to Math.PI
+      "TIKTOK_INIT_STATUS" to mapOf(
+        "SUCCESS" to TikTokInitStatus.SUCCESS.value,
+        "FAIL" to TikTokInitStatus.FAIL.value
+      )
     )
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    AsyncFunction("initTikTokSdk") { appId: String, ttAppId: String, promise: Promise ->
+      Handler(Looper.getMainLooper()).post {
+        val context = appContext.reactContext?.applicationContext
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
-    }
+        if (context == null) {
+          promise.resolve(mapOf(
+            "status" to TikTokInitStatus.FAIL.value,
+            "error" to mapOf(
+              "code" to "NO_CONTEXT",
+              "message" to "Application context is null"
+            )
+          ))
+          return@post
+        }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
-    }
+        val ttConfig = TTConfig(context)
+          .setAppId(appId)
+          .setTTAppId(ttAppId)
+          .setLogLevel(TikTokBusinessSdk.LogLevel.INFO)
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(ExpoTiktokEventView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: ExpoTiktokEventView, url: URL ->
-        view.webView.loadUrl(url.toString())
+        TikTokBusinessSdk.initializeSdk(ttConfig, object : TikTokBusinessSdk.TTInitCallback {
+          override fun success() {
+            promise.resolve(mapOf(
+              "status" to TikTokInitStatus.SUCCESS.value,
+              "error" to null
+            ))
+          }
+
+          override fun fail(code: Int, msg: String?) {
+            promise.resolve(mapOf(
+              "status" to TikTokInitStatus.FAIL.value,
+              "error" to mapOf(
+                "code" to code.toString(),
+                "message" to msg
+              )
+            ))
+          }
+        })
       }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
+    }
+
+    Function("startTrack") {
+      Handler(Looper.getMainLooper()).post {
+        TikTokBusinessSdk.startTrack()
+      }
+    }
+
+    Function("identifyUser") { externalId: String?, externalUserName: String?, phoneNumber: String?, email: String? ->
+      Handler(Looper.getMainLooper()).post {
+        try {
+          TikTokBusinessSdk.identify(
+            externalId,
+            externalUserName,
+            phoneNumber,
+            email
+          )
+        } catch (e: Exception) {
+          Log.e("ExpoTiktokEvent", "identify crash: ${e.message}")
+        }
+      }
+    }
+
+    Function("logout") {
+      Handler(Looper.getMainLooper()).post {
+        TikTokBusinessSdk.logout()
+      }
+    }
+
+    Function("trackLoginEvent") {
+      Handler(Looper.getMainLooper()).post {
+        val event = TTBaseEvent.newBuilder(EventName.LOGIN.toString()).build()
+        TikTokBusinessSdk.trackTTEvent(event)
+      }
+    }
+
+    Function("trackRegisterEvent") {
+      Handler(Looper.getMainLooper()).post {
+        val event = TTBaseEvent.newBuilder(EventName.REGISTRATION.toString()).build()
+        TikTokBusinessSdk.trackTTEvent(event)
+      }
     }
   }
 }
